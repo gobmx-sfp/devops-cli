@@ -16,7 +16,7 @@
     "cli-ux": "^5.4.1",
     "conf-cli": "^0.1.9",
     "fs-extra": "^8.1.0",
-    "gitlab": "^14.1.1",
+    "gitlab": "git+https://github.com/dreglad/gitbeaker.git",
     "inquirer": "^7.0.1",
     "lodash": "^4.17.15",
     "tslib": "^1"
