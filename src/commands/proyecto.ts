@@ -3,16 +3,14 @@ import {cli} from 'cli-ux'
 import {filter, find} from 'lodash'
 import Command from '../gitlab-command'
 import chalk from 'chalk'
-import {ProjectSchema as Project, EnvironmentSchema as Environment} from 'gitlab'
+import {
+  ProjectSchema as Project,
+  EnvironmentSchema as Environment,
+  GroupSchema as Group,
+  ResourceVariableSchema as Variable,
+} from 'gitlab'
 
 const DEFAULT_GROUP = 'dgti'
-
-interface Variable {
-  id: number;
-  name: string;
-  path: string;
-  name_with_namespace: string;
-}
 
 export default class Proyecto extends Command {
   static description = 'Información sobre proyectos individuales'
@@ -67,11 +65,14 @@ export default class Proyecto extends Command {
 
   page = 1
 
-  async logSubgroups(subgroups: object[]) {
-    this.log('\nSubgrupos totales:', chalk.bold(subgroups.length))
-    cli.table(subgroups, {
+  async logGroups(groups: Group[]) {
+    cli.table(groups, {
       id: {
         header: 'ID',
+        minWidth: 7,
+      },
+      path: {
+        header: 'Ruta',
         minWidth: 7,
       },
       name: {
@@ -82,10 +83,10 @@ export default class Proyecto extends Command {
         // extended: true,
       },
     })
+    cli.log(chalk.bold('Total\t'), groups.length.toString())
   }
 
   async logProjects(projects: Project[]) {
-    this.log('\nProyectos totales:', chalk.bold(projects.length))
     cli.table(projects, {
       id: {
         header: 'ID',
@@ -95,21 +96,14 @@ export default class Proyecto extends Command {
         header: 'Ruta',
         minWidth: 10,
       },
-      name: {
-        header: 'Nombre',
-      },
       web_url: {
         // extended: true,
       },
     })
-  }
-
-  async logGroupVariables(variables: [Variable]) {
-    this.log('\nVariables totales:', chalk.bold(variables.length))
+    cli.log(chalk.bold('Total\t'), projects.length.toString())
   }
 
   async logEnvironments(environments: Environment[]) {
-    this.log('\nAmbientes totales:', chalk.bold(environments.length))
     cli.table(environments, {
       id: {
         header: 'ID',
@@ -126,6 +120,23 @@ export default class Proyecto extends Command {
         get: env => env.external_url || '',
       },
     })
+    cli.log(chalk.bold('Total\t'), environments.length.toString())
+  }
+
+  async logVariables(variables: Variable[]) {
+    cli.table(variables, {
+      key: {
+        header: 'Nombre',
+        minWidth: 7,
+      },
+      value: {
+        header: 'Valor',
+      },
+      variable_type: {
+        header: 'Tipo',
+      },
+    })
+    cli.log(chalk.bold('Total\t'), variables.length.toString())
   }
 
   async run() {
@@ -139,45 +150,55 @@ export default class Proyecto extends Command {
     const project = group.projects.find(project =>
       [project.id, project.path].includes(args.proyecto),
     )
-    const environments: Environment[] = project ?
-      await this.gitlab?.Environments.all(project.id).then(envs =>
-        filter(
-          envs,
-          (env: Environment) => flags.all || env.state === 'available',
-        ),
-        ) :
-      []
+    const environments: Environment[] = project
+      ? await this.gitlab?.Environments.all(project.id).then(envs =>
+          filter(
+            envs,
+            (env: Environment) => flags.all || env.state === 'available',
+          ),
+        )
+      : []
 
     if (project) {
       this.log('\nProyecto', chalk.bold(project.name_with_namespace))
       cli.url(project.web_url, project.web_url || '')
 
+      const variables = await this.gitlab.ProjectVariables.all(project.id)
+      this.heading('Variables de proyecto')
+      this.logVariables(variables)
+
       if (args.ambiente) {
-        const environment = find(environments, {name: args.ambiente})
+        const environment = find(environments, {
+          name: args.ambiente,
+        })
         if (!environment) {
           this.error(`El Ambiente especificado no existe: ${args.ambiente}`)
         }
 
         switch (args.acción) {
-        case 'abrir':
-        case 'open':
-          if (environment.external_url) {
-            this.log('Abriendo URL en bavegador...', environment.external_url)
-            cli.open(environment.external_url)
-          } else {
-            this.warn(
-              `No hay una URL disponible para el ambiente ${environment.name}`,
-            )
-          }
-          break
+          case 'abrir':
+          case 'open':
+            if (environment.external_url) {
+              this.log('Abriendo URL en bavegador...', environment.external_url)
+              cli.open(environment.external_url)
+            } else {
+              this.warn(
+                `No hay una URL disponible para el ambiente ${environment.name}`,
+              )
+            }
+            break
 
-        case 'redeploy':
+          case 'redeploy':
+            break
+          // default:
         }
       } else if (environments.length > 0) {
+        this.heading('Ambientes')
         this.logEnvironments(environments)
       }
     } else {
       // console.log(group)
+      this.heading('Grupo')
       this.log('\nGrupo', chalk.bold(group?.name), `(${group?.id})`)
       cli.url(chalk.bold(group?.web_url), group?.web_url || '')
 
@@ -185,15 +206,20 @@ export default class Proyecto extends Command {
         group.id,
         this.paginationParams,
       )
-      projects && projects.length > 0 && this.logProjects(projects)
 
-      const subgroups:
-        | object[]
-        | undefined = await this.gitlab?.Groups.subgroups(
+      if (projects && projects.length > 0) {
+        this.heading('Ambientes')
+        this.logProjects(projects)
+      }
+
+      const subgroups: Group[] = await this.gitlab?.Groups.subgroups(
         group?.id,
         this.paginationParams,
       ).then()
-      subgroups && subgroups.length > 0 && this.logSubgroups(subgroups)
+      if (subgroups && subgroups.length > 0) {
+        this.heading('Subgrupos')
+        this.logGroups(subgroups)
+      }
     }
   }
 }

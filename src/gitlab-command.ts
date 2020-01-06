@@ -64,6 +64,10 @@ export default abstract class extends Command {
     }
   }
 
+  heading(text: string) {
+    return this.log(chalk.underline.bold(`\n${text}\n`))
+  }
+
   // async finally(err) {
   //   // called after run and catch regardless of whether or not the command errored
   // }
