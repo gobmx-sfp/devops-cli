@@ -1,15 +1,18 @@
 import {flags} from '@oclif/command'
-// import * as inquirer from 'inquirer'
 import {cli} from 'cli-ux'
-import {find} from 'lodash'
+import {filter, find} from 'lodash'
 import Command from '../gitlab-command'
 import chalk from 'chalk'
-import {ProjectSchema, PRojectDetailsSchema, GroupDetailSchema} from 'gitlab'
+import {ProjectSchema as Project, EnvironmentSchema as Environment} from 'gitlab'
 
 const DEFAULT_GROUP = 'dgti'
 
-type Environment = { id: number; name: string; state: string; external_url: string; description: string }
-type Variable = { id: number; name: string; path: string; name_with_namespace: string }
+interface Variable {
+  id: number;
+  name: string;
+  path: string;
+  name_with_namespace: string;
+}
 
 export default class Proyecto extends Command {
   static description = 'Información sobre proyectos individuales'
@@ -31,7 +34,7 @@ export default class Proyecto extends Command {
     {
       name: 'acción',
       description: 'Acción a realizar sobre el proyecto',
-      options: ['open', 'abrir', 'redeploy'],
+      options: ['abrir', 'open', 'redeploy', 'variables'],
     },
   ]
 
@@ -42,7 +45,7 @@ export default class Proyecto extends Command {
       default: false,
       description: 'Incluir todos los ambientes',
     }),
-  };
+  }
 
   static aliases = ['project', 'projects', 'proyectos']
 
@@ -51,13 +54,13 @@ export default class Proyecto extends Command {
     '$ devops proyecto ',
 
     chalk.bold('\n# Listar proyectos disponibles'),
+    '$ devops proyecto --help # Imprimir instrucciones de uso',
     '$ devops proyecto 358 # Información de proyecto',
-
     '$ devops proyecto devops/devopsfront # Por ruta del proyecto (grupo/subgrupo/proyecto)',
     '$ devops proyecto devops/devopsfront production # Información de un ambiente',
     '$ devops proyecto devops/devopsfront production open # Abrir URL externa de un proyecto',
+    '$ devops proyecto devops/devopsfront production variables # Re-ejecutar Listar variables de ambiente',
     '$ devops proyecto devops/devopsfront production redeploy # Re-ejecutar tarea Deploy de un ambiente',
-    '$ devops --help # Ayuida',
   ]
 
   perPage = 20
@@ -81,7 +84,7 @@ export default class Proyecto extends Command {
     })
   }
 
-  async logProjects(projects: ProjectSchema[]) {
+  async logProjects(projects: Project[]) {
     this.log('\nProyectos totales:', chalk.bold(projects.length))
     cli.table(projects, {
       id: {
@@ -105,7 +108,7 @@ export default class Proyecto extends Command {
     this.log('\nVariables totales:', chalk.bold(variables.length))
   }
 
-  async logEnvironments(environments: [Environment]) {
+  async logEnvironments(environments: Environment[]) {
     this.log('\nAmbientes totales:', chalk.bold(environments.length))
     cli.table(environments, {
       id: {
@@ -125,24 +128,29 @@ export default class Proyecto extends Command {
     })
   }
 
-  paginationParams = {
-    perPage: 20,
-    page: 1,
-  }
-
   async run() {
     const {args, flags} = this.parse(Proyecto)
 
-    const group: GroupDetailSchema | undefined = await this.gitlab?.Groups.show(args.grupo)
-    const project: ProjectSchema | undefined = group?.projects.find(project => [project.id, project.path].includes(args.proyecto))
-    const environments: [Environment] = project ?
-      (await this.gitlab?.Environments.all(project.id).then(
-        (envs: Environment[]) => envs.filter(env => flags.all || (env.state === 'available')))) :
+    if (!this.gitlab) {
+      this.error('GitLab no configurado')
+    }
+
+    const group = await this.gitlab.Groups.show(args.grupo)
+    const project = group.projects.find(project =>
+      [project.id, project.path].includes(args.proyecto),
+    )
+    const environments: Environment[] = project ?
+      await this.gitlab?.Environments.all(project.id).then(envs =>
+        filter(
+          envs,
+          (env: Environment) => flags.all || env.state === 'available',
+        ),
+        ) :
       []
 
     if (project) {
       this.log('\nProyecto', chalk.bold(project.name_with_namespace))
-      cli.url(project?.web_url, project?.web_url || '')
+      cli.url(project.web_url, project.web_url || '')
 
       if (args.ambiente) {
         const environment = find(environments, {name: args.ambiente})
@@ -157,7 +165,9 @@ export default class Proyecto extends Command {
             this.log('Abriendo URL en bavegador...', environment.external_url)
             cli.open(environment.external_url)
           } else {
-            this.warn(`No hay una URL disponible para el ambiente ${environment.name}`)
+            this.warn(
+              `No hay una URL disponible para el ambiente ${environment.name}`,
+            )
           }
           break
 
@@ -168,13 +178,21 @@ export default class Proyecto extends Command {
       }
     } else {
       // console.log(group)
-      this.log('\nGrupo', chalk.bold(group.name), `(${group.id})`)
+      this.log('\nGrupo', chalk.bold(group?.name), `(${group?.id})`)
       cli.url(chalk.bold(group?.web_url), group?.web_url || '')
 
-      const projects = await this.gitlab?.GroupProjects.all(group.id, this.paginationParams)
+      const projects = await this.gitlab?.GroupProjects.all(
+        group.id,
+        this.paginationParams,
+      )
       projects && projects.length > 0 && this.logProjects(projects)
 
-      const subgroups: object[] | undefined = await this.gitlab?.Groups.subgroups(group.id, this.paginationParams).then()
+      const subgroups:
+        | object[]
+        | undefined = await this.gitlab?.Groups.subgroups(
+        group?.id,
+        this.paginationParams,
+      ).then()
       subgroups && subgroups.length > 0 && this.logSubgroups(subgroups)
     }
   }

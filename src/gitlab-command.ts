@@ -6,13 +6,12 @@ import * as path from 'path'
 
 const CONFIG_FILE = 'gitlab.config.json'
 
-const readGitlabConfig = (command: Command) => fs
-.readJSON(path.join(command.config.configDir, CONFIG_FILE))
-.catch(error => {
-  if (error.code === 'ENOINT') {
-    command.log('Necesario')
-  }
-})
+const readGitlabConfig = (command: Command) =>
+  fs.readJSON(path.join(command.config.configDir, CONFIG_FILE)).catch(error => {
+    if (error.code === 'ENOINT') {
+      command.log('Necesario')
+    }
+  })
 
 export const writeGitlabConfig = async (command: Command, config: object) => {
   await fs.ensureDir(command.config.configDir)
@@ -26,12 +25,18 @@ export default abstract class extends Command {
       env: 'GITLAB_HOST',
     }),
     token: flags.string({
-      description: 'Token de acceso de GitLab (https://docs.gitlab.com/12.6/ee/user/profile/personal_access_tokens.html)',
+      description:
+        'Token de acceso de GitLab (https://docs.gitlab.com/12.6/ee/user/profile/personal_access_tokens.html)',
       env: 'GITLAB_TOKEN',
     }),
   }
 
   gitlab?: Gitlab
+
+  paginationParams = {
+    perPage: 100,
+    page: 1,
+  }
 
   async init() {
     const {flags} = this.parse()
@@ -40,7 +45,11 @@ export default abstract class extends Command {
     const token = flags.token || (await readGitlabConfig(this))?.token
 
     if (this.id !== 'config' && (!host || !token)) {
-      this.error(`Necesario cofifgurar credenciales de acceso: ${chalk.bold('$ devops config')}`)
+      this.error(
+        `Necesario cofifgurar credenciales de acceso: ${chalk.bold(
+          '$ devops config',
+        )}`,
+      )
     }
 
     this.gitlab = new Gitlab({host, token})

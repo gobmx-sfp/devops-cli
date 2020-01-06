@@ -20,7 +20,7 @@ $ npm install -g devops-cli
 $ devops COMMAND
 running command...
 $ devops (-v|--version|version)
-devops-cli/0.0.2 darwin-x64 node-v13.5.0
+devops-cli/0.0.3 darwin-x64 node-v13.5.0
 $ devops --help [COMMAND]
 USAGE
   $ devops COMMAND
@@ -32,7 +32,7 @@ USAGE
 * [`devops conf [KEY] [VALUE]`](#devops-conf-key-value)
 * [`devops config [ACTION]`](#devops-config-action)
 * [`devops help [COMMAND]`](#devops-help-command)
-* [`devops proyecto [ID] [AMBIENTE] [ACCIÓN]`](#devops-proyecto-id-ambiente-acción)
+* [`devops proyecto [GRUPO] [PROYECTO] [AMBIENTE] [ACCIÓN]`](#devops-proyecto-grupo-proyecto-ambiente-acción)
 * [`devops variables [FILE]`](#devops-variables-file)
 
 ## `devops conf [KEY] [VALUE]`
@@ -75,8 +75,6 @@ OPTIONS
   --token=token  Token de acceso de GitLab (https://docs.gitlab.com/12.6/ee/user/profile/personal_access_tokens.html)
 ```
 
-_See code: [src/commands/config/index.ts](https://github.com/dreglad/devops/blob/v0.0.2/src/commands/config/index.ts)_
-
 ## `devops help [COMMAND]`
 
 display help for devops
@@ -94,18 +92,19 @@ OPTIONS
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.2.3/src/commands/help.ts)_
 
-## `devops proyecto [ID] [AMBIENTE] [ACCIÓN]`
+## `devops proyecto [GRUPO] [PROYECTO] [AMBIENTE] [ACCIÓN]`
 
 Información sobre proyectos individuales
 
 ```
 USAGE
-  $ devops proyecto [ID] [AMBIENTE] [ACCIÓN]
+  $ devops proyecto [GRUPO] [PROYECTO] [AMBIENTE] [ACCIÓN]
 
 ARGUMENTS
-  ID        ID numérico o ruta de GitLab (grupo/seubgrupo/proyecto)
+  GRUPO     [default: dgti] ID o ruta de grupo en GitLab. Ej: dgti, dnet/catalogos
+  PROYECTO  ID numérico o ruta de GitLab (grupo/seubgrupo/proyecto)
   AMBIENTE  Seleccionar un ambiente por nombre o ID
-  ACCIÓN    (open|abrir|redeploy) Acción a realizar sobre el proyecto
+  ACCIÓN    (abrir|open|redeploy|variables) Acción a realizar sobre el proyecto
 
 OPTIONS
   -a, --all      Incluir todos los ambientes
@@ -123,15 +122,14 @@ EXAMPLES
   $ devops proyecto 
   
   # Listar proyectos disponibles
+  $ devops proyecto --help # Imprimir instrucciones de uso
   $ devops proyecto 358 # Información de proyecto
   $ devops proyecto devops/devopsfront # Por ruta del proyecto (grupo/subgrupo/proyecto)
   $ devops proyecto devops/devopsfront production # Información de un ambiente
   $ devops proyecto devops/devopsfront production open # Abrir URL externa de un proyecto
+  $ devops proyecto devops/devopsfront production variables # Re-ejecutar Listar variables de ambiente
   $ devops proyecto devops/devopsfront production redeploy # Re-ejecutar tarea Deploy de un ambiente
-  $ devops --help # Ayuida
 ```
-
-_See code: [src/commands/proyecto.ts](https://github.com/dreglad/devops/blob/v0.0.2/src/commands/proyecto.ts)_
 
 ## `devops variables [FILE]`
 
@@ -146,6 +144,4 @@ OPTIONS
   -h, --help       show CLI help
   -n, --name=name  name to print
 ```
-
-_See code: [src/commands/variables.ts](https://github.com/dreglad/devops/blob/v0.0.2/src/commands/variables.ts)_
 <!-- commandsstop -->

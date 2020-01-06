@@ -1,11 +1,11 @@
 {
   "name": "devops-cli",
-  "description": "Declaranet CLI",
-  "version": "0.0.2",
+  "description": "DevOps CLI",
+  "version": "0.0.3",
   "bin": {
     "devops": "./bin/run"
   },
-  "bugs": "https://github.com/dreglad/devops/issues",
+  "bugs": "https://gitlab.funcionpublica.gob.mx/dgti/devops-cli/issues",
   "dependencies": {
     "@oclif/command": "^1",
     "@oclif/config": "^1",
@@ -47,7 +47,7 @@
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],
-  "homepage": "https://github.com/dreglad/devops",
+  "homepage": "https://gitlab.funcionpublica.gob.mx/dgti/devops-cli",
   "keywords": [
     "oclif"
   ],
@@ -61,7 +61,7 @@
       "@oclif/plugin-help"
     ]
   },
-  "repository": "dreglad/devops",
+  "repository": "https://gitlab.funcionpublica.gob.mx/dgti/devops-cli.git",
   "scripts": {
     "postpack": "rm -f oclif.manifest.json",
     "posttest": "eslint . --ext .ts --config .eslintrc",

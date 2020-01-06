@@ -1360,10 +1360,8 @@ github-slugger@^1.2.1:
   dependencies:
     emoji-regex ">=6.0.0 <=6.1.1"
 
-gitlab@^14.1.1:
-  version "14.1.1"
-  resolved "https://registry.yarnpkg.com/gitlab/-/gitlab-14.1.1.tgz#db6ca13139d87992e736cdfdb4dfc6303ae29545"
-  integrity sha512-fA/G/ZTl0nmR/ntk/U5KK1uGqwdoisw0s/j2N09FA5/vR48JYvbBTNGyHBRTPbiozLf2yWCAU1NFA/6P0sYSFQ==
+"gitlab@file:../../../gitbeaker":
+  version "14.1.2"
   dependencies:
     chalk "^3.0.0"
     form-data "^3.0.0"
