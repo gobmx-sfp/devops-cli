@@ -65,7 +65,7 @@ export default abstract class extends Command {
   }
 
   heading(text: string) {
-    return this.log(chalk.underline.bold(`\n\n${text}\n`))
+    return this.log(chalk.underline.bold(`\n${text}\n`))
   }
 
   // async finally(err) {

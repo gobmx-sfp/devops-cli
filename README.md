@@ -102,13 +102,26 @@ USAGE
 
 ARGUMENTS
   ID        ID o ruta de grupo o proyecto en GitLab. Ej: dgti, dnet/catalogos, 72
-  ACCIÓN    (abrir|open|redeploy|pipelines|variables|variable|info) [default: info] Acción a realizar sobre el proyecto
+
+  ACCIÓN    (abrir|open|redeploy|pipelines|variables|variable|info) [default: info] Acción a realizar sobre el grupo o
+            proyecto
+
   AMBIENTE  Seleccionar un ambiente por nombre o ID
 
 OPTIONS
-  -a, --all      Incluir todos los ambientes
-  --host=host    Nombre del host de GitLab
-  --token=token  Token de acceso de GitLab (https://docs.gitlab.com/12.6/ee/user/profile/personal_access_tokens.html)
+  -a, --all               Incluir todos los ambientes en vez de solo los ambientes activos
+  -x, --extended          show extra columns
+  --columns=columns       only show provided columns (comma-separated)
+  --csv                   output is csv format [alias: --output=csv]
+  --filter=filter         filter property by partial string matching, ex: name=foo
+  --host=host             Nombre del host de GitLab
+  --no-header             hide table header from output
+  --no-truncate           do not truncate output to fit screen
+  --output=csv|json|yaml  output in a more machine friendly format
+  --sort=sort             property to sort by (prepend '-' for descending)
+
+  --token=token           Token de acceso de GitLab
+                          (https://docs.gitlab.com/12.6/ee/user/profile/personal_access_tokens.html)
 
 ALIASES
   $ devops project

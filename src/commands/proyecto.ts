@@ -1,6 +1,8 @@
 import {flags} from '@oclif/command'
+import {filter, find, get, pick} from 'lodash'
 import {cli} from 'cli-ux'
-import {filter, find, get} from 'lodash'
+import * as inquirer from 'inquirer'
+
 import Command from '../gitlab-command'
 import chalk from 'chalk'
 import {
@@ -9,7 +11,7 @@ import {
   GroupSchema as Group,
   ResourceVariableSchema as Variable,
 } from 'gitlab'
-// import {runInThisContext} from 'vm'
+import {Options} from '@oclif/config/lib/plugin'
 
 export default class Proyecto extends Command {
   static description = 'Información sobre proyectos individuales'
@@ -22,7 +24,7 @@ export default class Proyecto extends Command {
     },
     {
       name: 'acción',
-      description: 'Acción a realizar sobre el proyecto',
+      description: 'Acción a realizar sobre el grupo o proyecto',
       default: 'info',
       options: [
         'abrir',
@@ -42,10 +44,12 @@ export default class Proyecto extends Command {
 
   static flags = {
     ...Command.flags,
+    ...cli.table.flags(),
     all: flags.boolean({
       char: 'a',
       default: false,
-      description: 'Incluir todos los ambientes',
+      description:
+        'Incluir todos los ambientes en vez de solo los ambientes activos',
     }),
   }
 
@@ -56,94 +60,143 @@ export default class Proyecto extends Command {
   page = 1
 
   async logGroups(groups: Group[]) {
+    const {flags} = this.parse(Proyecto)
+    const tableOptions = pick(flags, Object.keys(cli.table.flags()))
+
     this.heading('Grupos')
-    cli.table(groups, {
-      id: {
-        header: 'ID',
-        minWidth: 7,
+    cli.table(
+      groups,
+      {
+        id: {
+          header: 'ID',
+          minWidth: 7,
+        },
+        name: {
+          header: 'Nombre',
+          minWidth: 7,
+        },
+        path: {
+          header: 'Ruta',
+          minWidth: 7,
+        },
+        web_url: {
+          // extended: true,
+        },
       },
-      name: {
-        header: 'Nombre',
-        minWidth: 7,
+      {
+        printLine: this.log,
+        ...(tableOptions as Options),
       },
-      path: {
-        header: 'Ruta',
-        minWidth: 7,
-      },
-      web_url: {
-        // extended: true,
-      },
-    })
-    cli.log(chalk.bold('\nTotal\t'), groups.length.toString())
+    )
+    // cli.log(chalk.bold('\nTotal\t'), groups.length.toString())
   }
 
   async logProjects(projects: Project[]) {
+    const {flags} = this.parse(Proyecto)
+    const tableOptions = pick(flags, Object.keys(cli.table.flags()))
+
     this.heading('Proyectos')
-    cli.table(projects, {
-      id: {
-        header: 'ID',
-        minWidth: 7,
+    cli.table(
+      projects,
+      {
+        id: {
+          header: 'ID',
+          minWidth: 7,
+        },
+        path: {
+          header: 'Ruta',
+          minWidth: 10,
+        },
+        web_url: {
+          // extended: true,
+        },
       },
-      path: {
-        header: 'Ruta',
-        minWidth: 10,
+      {
+        printLine: this.log,
+        ...(tableOptions as Options),
       },
-      web_url: {
-        // extended: true,
-      },
-    })
-    cli.log(chalk.bold('\nTotal\t'), projects.length.toString())
+    )
+    // cli.log(chalk.bold('\nTotal\t'), projects.length.toString())
   }
 
   async logEnvironments(environments: Environment[]) {
+    const {flags} = this.parse(Proyecto)
+    const tableOptions = pick(flags, Object.keys(cli.table.flags()))
+
     this.heading('Ambientes')
-    cli.table(environments, {
-      id: {
-        header: 'ID',
-        minWidth: 7,
+    cli.table(
+      environments,
+      {
+        id: {
+          header: 'ID',
+          minWidth: 7,
+        },
+        name: {
+          header: 'Nombre',
+        },
+        state: {
+          header: 'Estado',
+        },
+        external_url: {
+          header: 'URL',
+          get: env => env.external_url || '',
+        },
       },
-      name: {
-        header: 'Nombre',
+      {
+        printLine: this.log,
+        ...(tableOptions as Options),
       },
-      state: {
-        header: 'Estado',
-      },
-      external_url: {
-        header: 'URL',
-        get: env => env.external_url || '',
-      },
-    })
-    cli.log(chalk.bold('\nTotal\t'), environments.length.toString())
+    )
+    // cli.log(chalk.bold('\nTotal\t'), environments.length.toString())
   }
 
   async logVariables(variables: Variable[]) {
+    const {flags} = this.parse(Proyecto)
+    const tableOptions = pick(flags, Object.keys(cli.table.flags()))
+
     this.heading('Variables')
-    cli.table(variables, {
-      key: {
-        header: 'Nombre',
-        minWidth: 7,
+    cli.table(
+      variables,
+      {
+        key: {
+          header: 'Nombre',
+          minWidth: 7,
+        },
+        value: {
+          header: 'Valor',
+        },
+        protected: {
+          header: 'Protegida',
+          get: variable => (get(variable, 'protected', false) ? 'Sí' : 'No'),
+        },
+        masked: {
+          header: 'Enmascarada',
+          get: variable => (get(variable, 'masked', false) ? 'Sí' : 'No'),
+        },
+        variable_type: {
+          header: 'Tipo',
+          get: ({variable_type}: Variable) => {
+            const variableTypes = {
+              env_var: 'Ambiente',
+              file: 'Archivo',
+            }
+            return get(variableTypes, variable_type, variable_type)
+          },
+        },
+        ...(get(variables, '0.environment_scope')
+          ? {
+              environment_scope: {
+                header: 'Ambienbte(s)',
+              },
+            }
+          : {}),
       },
-      value: {
-        header: 'Valor',
+      {
+        printLine: this.log,
+        ...(tableOptions as Options),
       },
-      protected: {
-        header: 'Protegido',
-      },
-      masked: {
-        header: 'Enmascarada',
-      },
-      variable_type: {
-        header: 'Tipo',
-      },
-      ...(get(variables, '0.environment_scope')
-        ? {
-            environment_scope: {
-              header: 'Ambienbte alcance',
-            },
-          }
-        : {}),
-    })
-    cli.log(chalk.bold('\nTotal\t'), variables.length.toString())
+    )
+    // cli.log(chalk.bold('\nTotal\t'), variables.length.toString())
   }
 
   async logGroup(group: Group) {
@@ -183,12 +236,10 @@ export default class Proyecto extends Command {
     }
 
     const {args, flags} = this.parse(Proyecto)
-
     this.heading(`${project.name}`)
     cli.log(`ID: ${project.id}`)
-    cli.log(`Path: ${project.namespace.path}`)
-    cli.url(`GitLab: ${project.web_url}`, project.web_url || '')
-    cli.log(`\n${project.description}`)
+    cli.log(`Path: ${project.path_with_namespace}`)
+    cli.log(`GitLab: ${project.web_url}`)
 
     const environments: Environment[] = project
       ? await this.gitlab?.Environments.all(project.id).then(envs =>
@@ -200,7 +251,6 @@ export default class Proyecto extends Command {
       : []
 
     let environment: Environment | undefined
-
     if (args.ambiente) {
       environment = find(environments, {
         name: args.ambiente,
@@ -208,8 +258,6 @@ export default class Proyecto extends Command {
       if (!environment) {
         this.error(`El Ambiente especificado no existe: ${args.ambiente}`)
       }
-    } else if (environments.length > 0) {
-      this.logEnvironments(environments)
     }
 
     const variables = await this.gitlab.ProjectVariables.all(project.id)
@@ -217,30 +265,100 @@ export default class Proyecto extends Command {
     switch (args.acción) {
       case 'abrir':
       case 'open':
+        // Si está seleccionado un ambiente, abrir la URL de despliegue
         if (environment?.external_url) {
-          this.log('Abriendo URL en bavegador...', environment.external_url)
+          this.log(
+            `Abriendo URL de amebiente "${environment.name}" en bavegador...`,
+            environment.external_url,
+          )
           cli.open(environment.external_url)
         } else {
-          this.warn(
-            `No hay una URL disponible para el ambiente ${environment?.name}`,
-          )
+          // Si no hay un ambiente seleccionado, abrir la URL de GitLab
+          cli.open(project.web_url)
         }
         break
 
       case 'variable':
       case 'variables':
         this.logVariables(variables)
+        this.log(`\n\n¿Añadir variable CI/CD a proyecto ${project.name}?\n`)
+        this.inquireProjectVariable(project)
         break
 
       case 'redeploy':
         break
-      // default:
+
       case 'info':
-        if (variables && variables?.length) {
-          this.logVariables(variables)
-        }
+      default:
+        if (variables?.length) this.logVariables(variables)
+        if (environments?.length) this.logEnvironments(environments)
         break
     }
+  }
+
+  async inquireProjectVariable(project: Project) {
+    inquirer
+      .prompt([
+        {
+          name: 'environment_scope',
+          message: 'Ambiente(s)',
+          type: 'list',
+          choices: [
+            {name: '* (Todos los ambientes)', value: '*'},
+            'production',
+            'staging',
+            'review/*',
+            'Otro...',
+          ],
+          default: '*',
+        },
+        {
+          name: 'key',
+          message: 'Nombre de la variable',
+          type: 'string',
+          validate: value => {
+            if (!value.trim()) {
+              return Boolean(value.trim())
+            }
+            return true
+          },
+        },
+        {
+          name: 'value',
+          message: 'Valor',
+          short: 'valor',
+          type: 'input',
+        },
+        {
+          name: 'options',
+          message: 'Opciones',
+          type: 'checkbox',
+          choices: ['protected', 'masked'],
+        },
+        {
+          name: 'confirm',
+          message: 'Se agregará una variable ¿Estás seguro?',
+          type: 'confirm',
+          default: false,
+        },
+      ])
+      .then(({key, value, options, environment_scope, confirm}) => {
+        if (!confirm) return
+
+        this.log('Creando variable...')
+        this.gitlab?.ProjectVariables.create(project.id, {
+          key,
+          value,
+          environment_scope,
+          ...options.reduce(
+            (opts: string[], opt: string) => ({...opts, [opt]: true}),
+            {},
+          ),
+        }).catch(error => {
+          console.error(error)
+          this.warn('Error al crear variable')
+        })
+      })
   }
 
   async run() {
@@ -259,6 +377,7 @@ export default class Proyecto extends Command {
               this.logProject(project)
             })
             .catch(error => {
+              console.error(error)
               this.warn(
                 `Error al obtener groupo o proyecto: ${error.description}`,
               )
