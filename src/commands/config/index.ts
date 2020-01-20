@@ -1,4 +1,3 @@
-import {flags} from '@oclif/command'
 import * as inquirer from 'inquirer'
 import Command, {writeGitlabConfig} from '../../command'
 import hostOptions from './hostOptions.json'
@@ -22,32 +21,33 @@ export class Config extends Command {
       writeGitlabConfig(this, {})
     }
 
+    // prettier-ignore
     inquirer
-      .prompt([
-        {
-          name: 'host',
-          message: 'Elige un servidor GitLab',
-          type: 'list',
-          choices: hostOptions,
-        },
-        {
-          name: 'token',
-          message: 'Introduce un Personal Access Token vigente',
-          type: 'password',
-        },
-      ])
-      .then(({host, token}) => {
-        writeGitlabConfig(this, {
-          host,
-          token,
-        })
-          .then(() => {
-            console.log('Se guardó la configuración')
-          })
-          .catch(error => {
-            console.log(error)
-            this.error('Error al guardar la configuración')
-          })
+    .prompt([
+      {
+        name: 'host',
+        message: 'Elige un servidor GitLab',
+        type: 'list',
+        choices: hostOptions,
+      },
+      {
+        name: 'token',
+        message: 'Introduce un Personal Access Token vigente',
+        type: 'password',
+      },
+    ])
+    .then(({host, token}) => {
+      writeGitlabConfig(this, {
+        host,
+        token,
       })
+      .then(() => {
+        console.log('Se guardó la configuración')
+      })
+      .catch(error => {
+        console.log(error)
+        this.error('Error al guardar la configuración')
+      })
+    })
   }
 }

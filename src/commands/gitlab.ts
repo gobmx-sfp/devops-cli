@@ -12,7 +12,7 @@ import {
 } from 'gitlab'
 import {Options} from '@oclif/config/lib/plugin'
 
-export default class Proyecto extends Command {
+export default class GitLab extends Command {
   static description = 'Información sobre proyectos individuales'
 
   static args = [
@@ -57,8 +57,8 @@ export default class Proyecto extends Command {
 
   page = 1
 
-  async logGroups(groups: Group[]) {
-    const {flags} = this.parse(Proyecto)
+  async logGroups(groups: Group[], total = false) {
+    const {flags} = this.parse(GitLab)
     const tableOptions = pick(flags, Object.keys(cli.table.flags()))
 
     this.heading('Grupos')
@@ -86,11 +86,11 @@ export default class Proyecto extends Command {
         ...(tableOptions as Options),
       },
     )
-    // cli.log(chalk.bold('\nTotal\t'), groups.length.toString())
+    total && cli.log(chalk.bold('Total:\t'), groups.length.toString())
   }
 
-  async logProjects(projects: Project[]) {
-    const {flags} = this.parse(Proyecto)
+  async logProjects(projects: Project[], total = false) {
+    const {flags} = this.parse(GitLab)
     const tableOptions = pick(flags, Object.keys(cli.table.flags()))
 
     this.heading('Proyectos')
@@ -114,11 +114,11 @@ export default class Proyecto extends Command {
         ...(tableOptions as Options),
       },
     )
-    // cli.log(chalk.bold('\nTotal\t'), projects.length.toString())
+    total && cli.log(chalk.bold('Total:\t'), projects.length.toString())
   }
 
-  async logEnvironments(environments: Environment[]) {
-    const {flags} = this.parse(Proyecto)
+  async logEnvironments(environments: Environment[], total = false) {
+    const {flags} = this.parse(GitLab)
     const tableOptions = pick(flags, Object.keys(cli.table.flags()))
 
     this.heading('Ambientes')
@@ -145,14 +145,26 @@ export default class Proyecto extends Command {
         ...(tableOptions as Options),
       },
     )
-    // cli.log(chalk.bold('\nTotal\t'), environments.length.toString())
+    total && cli.log(chalk.bold('Total:\t'), environments.length.toString())
   }
 
-  async logVariables(variables: Variable[]) {
-    const {flags} = this.parse(Proyecto)
+  async logVariables(variables: Variable[], total = false) {
+    const {flags} = this.parse(GitLab)
     const tableOptions = pick(flags, Object.keys(cli.table.flags()))
 
     this.heading('Variables')
+
+    const scope = get(variables, '0.environment_scope')
+
+    // prettier-ignore
+    const envScopeColumn: object = scope ?
+      {
+        environment_scope: {
+          header: 'Ambienbte(s)',
+        },
+      } :
+      {}
+
     cli.table(
       variables,
       {
@@ -181,26 +193,21 @@ export default class Proyecto extends Command {
             return get(variableTypes, variable_type, variable_type)
           },
         },
-        ...(get(variables, '0.environment_scope')
-          ? {
-              environment_scope: {
-                header: 'Ambienbte(s)',
-              },
-            }
-          : {}),
+        ...envScopeColumn,
       },
       {
         printLine: this.log,
         ...(tableOptions as Options),
       },
     )
-    // cli.log(chalk.bold('\nTotal\t'), variables.length.toString())
+    total && cli.log(chalk.bold('Total\t'), variables.length.toString())
   }
 
   async logGroup(group: Group) {
-    this.log('\nGrupo', chalk.bold(group?.name), `(ID: ${group?.id})`)
-    this.log(group.description)
-    cli.url(chalk.bold(group?.web_url), group?.web_url || '')
+    this.heading(`${group.name}`)
+    cli.log(`ID: ${group.id}`)
+    cli.log(`Path: ${group.full_path}`)
+    cli.log(`GitLab: ${group.web_url}`)
 
     const projects = await this.gitlab?.GroupProjects.all(
       group.id,
@@ -233,7 +240,7 @@ export default class Proyecto extends Command {
       this.error('GitLab no configurado. Ejecuta: "devops config"')
     }
 
-    const {args, flags} = this.parse(Proyecto)
+    const {args, flags} = this.parse(GitLab)
     this.heading(`${project.name}`)
     cli.log(`ID: ${project.id}`)
     cli.log(`Path: ${project.path_with_namespace}`)
@@ -245,14 +252,15 @@ export default class Proyecto extends Command {
     // cli.log(`Grupo: ${project.gr}`)
     console.log(project)
 
-    const environments: Environment[] = project
-      ? await this.gitlab?.Environments.all(project.id).then(envs =>
-          filter(
-            envs,
-            (env: Environment) => flags.all || env.state === 'available',
-          ),
-        )
-      : []
+    // prettier-ignore
+    const environments: Environment[] = project ?
+      await this.gitlab?.Environments.all(project.id).then(envs =>
+        filter(
+          envs,
+          (env: Environment) => flags.all || env.state === 'available',
+        ),
+        ) :
+      []
 
     let environment: Environment | undefined
     if (args.ambiente) {
@@ -266,90 +274,85 @@ export default class Proyecto extends Command {
 
     const variables = await this.gitlab.ProjectVariables.all(project.id)
 
+    // prettier-ignore
     switch (args.acción) {
-      case 'abrir':
-      case 'open':
-        // Si está seleccionado un ambiente, abrir la URL de despliegue
-        if (environment?.external_url) {
-          this.log(
-            `Abriendo URL de amebiente "${environment.name}" en bavegador...`,
-            environment.external_url,
-          )
-          cli.open(environment.external_url)
-        } else {
-          // Si no hay un ambiente seleccionado, abrir la URL de GitLab
-          cli.open(project.web_url)
-        }
-        break
+    case 'abrir':
+    case 'open':
+      // Si está seleccionado un ambiente, abrir la URL de despliegue
+      if (environment?.external_url) {
+        this.log(
+          `Abriendo URL de amebiente "${environment.name}" en bavegador...`,
+          environment.external_url,
+        )
+        cli.open(environment.external_url)
+      } else {
+        // Si no hay un ambiente seleccionado, abrir la URL de GitLab
+        cli.open(project.web_url)
+      }
+      break
 
-      case 'variable':
-      case 'variables':
-        this.logVariables(variables)
-        this.log(`\n\n¿Añadir variable CI/CD a proyecto ${project.name}?\n`)
-        this.inquireProjectVariable(project)
-        break
+    case 'variable':
+    case 'variables':
+      this.logVariables(variables)
+      this.log(`\n\n¿Añadir variable CI/CD a proyecto ${project.name}?`)
+      this.inquireProjectVariable(project)
+      break
 
-      case 'redeploy':
-        break
+    case 'redeploy':
+      break
 
-      case 'info':
-      default:
-        if (variables?.length) this.logVariables(variables)
-        if (environments?.length) this.logEnvironments(environments)
-        break
+    case 'info':
+    default:
+      if (variables?.length) await this.logVariables(variables)
+      if (environments?.length) await this.logEnvironments(environments)
     }
   }
 
   async inquireProjectVariable(project: Project) {
-    inquirer
-      .prompt([
-        {
-          name: 'environment_scope',
-          message: 'Ambiente(s)',
-          type: 'list',
-          choices: [
-            {name: '* (Todos los ambientes)', value: '*'},
-            'production',
-            'staging',
-            'review/*',
-            'Otro...',
-          ],
-          default: '*',
-        },
-        {
-          name: 'key',
-          message: 'Nombre de la variable',
-          type: 'string',
-          validate: value => {
-            if (!value.trim()) {
-              return Boolean(value.trim())
-            }
-            return true
-          },
-        },
-        {
-          name: 'value',
-          message: 'Valor',
-          short: 'valor',
-          type: 'input',
-        },
-        {
-          name: 'options',
-          message: 'Opciones',
-          type: 'checkbox',
-          choices: ['protected', 'masked'],
-        },
-        {
-          name: 'confirm',
-          message: 'Se agregará una variable ¿Estás seguro?',
-          type: 'confirm',
-          default: false,
-        },
-      ])
-      .then(({key, value, options, environment_scope, confirm}) => {
-        if (!confirm) return
+    // prettier-ignore
+    inquirer.prompt([
+      {
+        name: 'environment_scope',
+        message: 'Ambiente(s)',
+        type: 'list',
+        choices: [
+          {name: '* (Todos los ambientes)', value: '*'},
+          'production',
+          'staging',
+          'review/*',
+          'Otro...',
+        ],
+        default: '*',
+      },
+      {
+        name: 'key',
+        message: 'Nombre de la variable',
+        type: 'string',
+        validate: value => !value.trim(),
+      },
+      {
+        name: 'value',
+        message: 'Valor',
+        short: 'valor',
+        type: 'input',
+      },
+      {
+        name: 'options',
+        message: 'Opciones',
+        type: 'checkbox',
+        choices: ['protected', 'masked'],
+      },
+      {
+        name: 'confirm',
+        message: 'Se agregará una variable ¿Estás seguro?',
+        type: 'confirm',
+        default: false,
+      },
+    ])
+    .then(({key, value, options, environment_scope, confirm}) => {
+      if (!confirm) return
 
-        this.log('Creando variable...')
+      this.log('Creando variable...')
         this.gitlab?.ProjectVariables.create(project.id, {
           key,
           value,
@@ -365,11 +368,11 @@ export default class Proyecto extends Command {
           console.error(error)
           this.warn('Error al crear variable')
         })
-      })
+    })
   }
 
   async run() {
-    const {flags} = this.parse(Proyecto)
+    const {flags} = this.parse(GitLab)
     const id = flags.id || this.gitProjectId
 
     if (!this.gitlab) {
@@ -377,9 +380,10 @@ export default class Proyecto extends Command {
     }
 
     if (id) {
+      // prettier-ignore
       await this.gitlab.Groups.show(id)
-        .then((group: Group) => this.logGroup(group))
-        .catch(() =>
+      .then((group: Group) => this.logGroup(group))
+      .catch(() =>
           this.gitlab?.Projects.show(id)
             .then((project: Project) => this.logProject(project))
             .catch(error => {
@@ -391,7 +395,7 @@ export default class Proyecto extends Command {
                 )
               }
             }),
-        )
+      )
     } else {
       await this.gitlab.Groups.all().then(groups =>
         this.logGroups(groups.filter(group => !group.parent_id)),
