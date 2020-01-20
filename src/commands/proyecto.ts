@@ -2,6 +2,7 @@ import {flags} from '@oclif/command'
 import {filter, find, get, pick} from 'lodash'
 import {cli} from 'cli-ux'
 import * as inquirer from 'inquirer'
+import url from 'url'
 
 import Command from '../gitlab-command'
 import chalk from 'chalk'
@@ -13,15 +14,13 @@ import {
 } from 'gitlab'
 import {Options} from '@oclif/config/lib/plugin'
 
+const workingDirGit = require('simple-git')(process.cwd())
+// console.log(workingDirGit)
+
 export default class Proyecto extends Command {
   static description = 'Información sobre proyectos individuales'
 
   static args = [
-    {
-      name: 'id',
-      description:
-        'ID o ruta de grupo o proyecto en GitLab. Ej: dgti, dnet/catalogos, 72',
-    },
     {
       name: 'acción',
       description: 'Acción a realizar sobre el grupo o proyecto',
@@ -45,6 +44,24 @@ export default class Proyecto extends Command {
   static flags = {
     ...Command.flags,
     ...cli.table.flags(),
+    id: flags.string({
+      description:
+        'ID o ruta de grupo o proyecto en GitLab. Ej: dgti, dnet/catalogos, 72',
+      default: async () =>
+        await new Promise<string[]>(resolve => {
+          workingDirGit
+            .silent(true)
+            .getRemotes(true, (_: any, remotes: any) => {
+              if (remotes?.length) {
+                const origin = find(remotes, {name: 'origin'})
+                if (origin) {
+                  const [, namespace] = origin.refs.push.match(/.+:(.+).git/)
+                  resolve(namespace)
+                }
+              }
+            })
+        }),
+    }),
     all: flags.boolean({
       char: 'a',
       default: false,
@@ -214,7 +231,7 @@ export default class Proyecto extends Command {
     }
 
     if (!this.gitlab) {
-      this.error('GitLab no configurado')
+      this.error('GitLab no configurado. Ejecuta: "devops config"')
     }
 
     this.gitlab.GroupVariables.all(group.id).then(variables => {
@@ -232,7 +249,7 @@ export default class Proyecto extends Command {
 
   async logProject(project: Project) {
     if (!this.gitlab) {
-      this.error('GitLab no configurado')
+      this.error('GitLab no configurado. Ejecuta: "devops config"')
     }
 
     const {args, flags} = this.parse(Proyecto)
@@ -362,25 +379,29 @@ export default class Proyecto extends Command {
   }
 
   async run() {
-    const {args} = this.parse(Proyecto)
+    const {flags, args} = this.parse(Proyecto)
+    const id: string = await flags.id
 
     if (!this.gitlab) {
-      this.error('GitLab no configurado')
+      this.error('GitLab no configurado. Ejecuta: "devops config"')
     }
 
-    if (args.id) {
-      this.gitlab.Groups.show(args.id)
-        .then(group => this.logGroup(group))
+    if (id) {
+      this.gitlab.Groups.show(id)
+        .then((group: Group) => this.logGroup(group))
         .catch(() => {
-          this.gitlab?.Projects.show(args.id)
-            .then(project => {
+          this.gitlab?.Projects.show(id)
+            .then((project: Project) => {
               this.logProject(project)
             })
             .catch(error => {
-              console.error(error)
-              this.warn(
-                `Error al obtener groupo o proyecto: ${error.description}`,
-              )
+              if (error.response.status === 404) {
+                this.warn(`El grupo o proyecto no existe: ${id}`)
+              } else {
+                this.warn(
+                  `Error al obtener grupo o proyecto (${id}): ${error.description}`,
+                )
+              }
             })
         })
     } else {

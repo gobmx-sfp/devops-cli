@@ -32,7 +32,7 @@ USAGE
 * [`devops conf [KEY] [VALUE]`](#devops-conf-key-value)
 * [`devops config [ACTION]`](#devops-config-action)
 * [`devops help [COMMAND]`](#devops-help-command)
-* [`devops proyecto [ID] [ACCIÓN] [AMBIENTE]`](#devops-proyecto-id-acción-ambiente)
+* [`devops proyecto [ACCIÓN] [AMBIENTE]`](#devops-proyecto-acción-ambiente)
 * [`devops variables [FILE]`](#devops-variables-file)
 
 ## `devops conf [KEY] [VALUE]`
@@ -92,17 +92,15 @@ OPTIONS
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.2.3/src/commands/help.ts)_
 
-## `devops proyecto [ID] [ACCIÓN] [AMBIENTE]`
+## `devops proyecto [ACCIÓN] [AMBIENTE]`
 
 Información sobre proyectos individuales
 
 ```
 USAGE
-  $ devops proyecto [ID] [ACCIÓN] [AMBIENTE]
+  $ devops proyecto [ACCIÓN] [AMBIENTE]
 
 ARGUMENTS
-  ID        ID o ruta de grupo o proyecto en GitLab. Ej: dgti, dnet/catalogos, 72
-
   ACCIÓN    (abrir|open|redeploy|pipelines|variables|variable|info) [default: info] Acción a realizar sobre el grupo o
             proyecto
 
@@ -115,6 +113,7 @@ OPTIONS
   --csv                   output is csv format [alias: --output=csv]
   --filter=filter         filter property by partial string matching, ex: name=foo
   --host=host             Nombre del host de GitLab
+  --id=id                 ID o ruta de grupo o proyecto en GitLab. Ej: dgti, dnet/catalogos, 72
   --no-header             hide table header from output
   --no-truncate           do not truncate output to fit screen
   --output=csv|json|yaml  output in a more machine friendly format
