@@ -2,8 +2,6 @@ import {flags} from '@oclif/command'
 import {filter, find, get, pick} from 'lodash'
 import {cli} from 'cli-ux'
 import * as inquirer from 'inquirer'
-import url from 'url'
-
 import Command from '../gitlab-command'
 import chalk from 'chalk'
 import {
@@ -13,9 +11,6 @@ import {
   ResourceVariableSchema as Variable,
 } from 'gitlab'
 import {Options} from '@oclif/config/lib/plugin'
-
-const workingDirGit = require('simple-git')(process.cwd())
-// console.log(workingDirGit)
 
 export default class Proyecto extends Command {
   static description = 'Información sobre proyectos individuales'
@@ -47,20 +42,6 @@ export default class Proyecto extends Command {
     id: flags.string({
       description:
         'ID o ruta de grupo o proyecto en GitLab. Ej: dgti, dnet/catalogos, 72',
-      default: async () =>
-        await new Promise<string[]>(resolve => {
-          workingDirGit
-            .silent(true)
-            .getRemotes(true, (_: any, remotes: any) => {
-              if (remotes?.length) {
-                const origin = find(remotes, {name: 'origin'})
-                if (origin) {
-                  const [, namespace] = origin.refs.push.match(/.+:(.+).git/)
-                  resolve(namespace)
-                }
-              }
-            })
-        }),
     }),
     all: flags.boolean({
       char: 'a',
@@ -368,7 +349,10 @@ export default class Proyecto extends Command {
           value,
           environment_scope,
           ...options.reduce(
-            (opts: string[], opt: string) => ({...opts, [opt]: true}),
+            (opts: string[], opt: string) => ({
+              ...opts,
+              [opt]: true,
+            }),
             {},
           ),
         }).catch(error => {
@@ -379,8 +363,8 @@ export default class Proyecto extends Command {
   }
 
   async run() {
-    const {flags, args} = this.parse(Proyecto)
-    const id: string = await flags.id
+    const {flags} = this.parse(Proyecto)
+    const id = flags.id || this.gitProjectId
 
     if (!this.gitlab) {
       this.error('GitLab no configurado. Ejecuta: "devops config"')

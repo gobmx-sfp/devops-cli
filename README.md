@@ -16,11 +16,11 @@ Declaranet CLI
 # Usage
 <!-- usage -->
 ```sh-session
-$ npm install -g devops-cli
+$ npm install -g @gobmx-sfp/devops-cli
 $ devops COMMAND
 running command...
 $ devops (-v|--version|version)
-devops-cli/0.0.4 darwin-x64 node-v13.6.0
+@gobmx-sfp/devops-cli/0.0.5 darwin-x64 node-v13.6.0
 $ devops --help [COMMAND]
 USAGE
   $ devops COMMAND
@@ -29,35 +29,10 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
-* [`devops conf [KEY] [VALUE]`](#devops-conf-key-value)
 * [`devops config [ACTION]`](#devops-config-action)
 * [`devops help [COMMAND]`](#devops-help-command)
 * [`devops proyecto [ACCIÓN] [AMBIENTE]`](#devops-proyecto-acción-ambiente)
 * [`devops variables [FILE]`](#devops-variables-file)
-
-## `devops conf [KEY] [VALUE]`
-
-manage configuration
-
-```
-USAGE
-  $ devops conf [KEY] [VALUE]
-
-ARGUMENTS
-  KEY    key of the config
-  VALUE  value of the config
-
-OPTIONS
-  -d, --cwd=cwd          config file location
-  -d, --delete           delete?
-  -h, --help             show CLI help
-  -k, --key=key          key of the config
-  -n, --name=name        config file name
-  -p, --project=project  project name
-  -v, --value=value      value of the config
-```
-
-_See code: [conf-cli](https://github.com/natzcam/conf-cli/blob/v0.1.9/src/commands/conf.ts)_
 
 ## `devops config [ACTION]`
 

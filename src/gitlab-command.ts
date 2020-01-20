@@ -1,10 +1,27 @@
 import Command, {flags} from '@oclif/command'
 import {Gitlab} from 'gitlab'
+import {find} from 'lodash'
 import chalk from 'chalk'
 import * as fs from 'fs-extra'
 import * as path from 'path'
 
+const git = require('simple-git')(process.cwd())
+
 const CONFIG_FILE = 'gitlab.config.json'
+
+const getGitProjectId = async () => {
+  return new Promise<string>(resolve => {
+    return git.silent(true).getRemotes(true, (_: any, remotes: any) => {
+      if (remotes?.length) {
+        const origin = find(remotes, {name: 'origin'})
+        if (origin) {
+          const [, namespace] = origin.refs.push.match(/.+:(.+).git/)
+          resolve(namespace)
+        }
+      }
+    })
+  })
+}
 
 const readGitlabConfig = (command: Command) =>
   fs.readJSON(path.join(command.config.configDir, CONFIG_FILE)).catch(error => {
@@ -33,6 +50,8 @@ export default abstract class extends Command {
 
   gitlab?: Gitlab
 
+  gitProjectId?: string
+
   paginationParams = {
     perPage: 100,
     page: 1,
@@ -53,6 +72,8 @@ export default abstract class extends Command {
     }
 
     this.gitlab = new Gitlab({host, token})
+
+    this.gitProjectId = await getGitProjectId()
   }
 
   async catch(error: any) {

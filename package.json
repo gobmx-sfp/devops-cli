@@ -50,7 +50,10 @@
   ],
   "homepage": "https://gitlab.funcionpublica.gob.mx/dgti/devops-cli",
   "keywords": [
-    "oclif"
+    "devops",
+    "GitLab",
+    "autodevops",
+    "SFP"
   ],
   "license": "MIT",
   "main": "lib/index.js",
@@ -58,7 +61,6 @@
     "commands": "./lib/commands",
     "bin": "devops",
     "plugins": [
-      "conf-cli",
       "@oclif/plugin-help"
     ]
   },
