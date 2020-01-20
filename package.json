@@ -1,5 +1,5 @@
 {
-  "name": "@gobmx-sfp/devops-cli",
+  "name": "@gobmx-sfp/devops",
   "description": "SFP DevOps CLI",
   "version": "0.1.0",
   "bin": {
