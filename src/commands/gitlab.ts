@@ -2,7 +2,7 @@ import {flags} from '@oclif/command'
 import {filter, find, get, pick} from 'lodash'
 import {cli} from 'cli-ux'
 import * as inquirer from 'inquirer'
-import Command from '../gitlab-command'
+import Command from '../command'
 import chalk from 'chalk'
 import {
   ProjectSchema as Project,
@@ -51,7 +51,7 @@ export default class Proyecto extends Command {
     }),
   }
 
-  static aliases = ['project', 'projects', 'proyectos']
+  static aliases = ['gl']
 
   perPage = 100
 
@@ -215,9 +215,9 @@ export default class Proyecto extends Command {
       this.error('GitLab no configurado. Ejecuta: "devops config"')
     }
 
-    this.gitlab.GroupVariables.all(group.id).then(variables => {
-      this.logVariables(variables)
-    })
+    await this.gitlab.GroupVariables.all(group.id).then(variables =>
+      this.logVariables(variables),
+    )
 
     const subgroups: Group[] = await this.gitlab.Groups.subgroups(
       group.id,
@@ -238,6 +238,12 @@ export default class Proyecto extends Command {
     cli.log(`ID: ${project.id}`)
     cli.log(`Path: ${project.path_with_namespace}`)
     cli.log(`GitLab: ${project.web_url}`)
+    project.namespace &&
+      cli.log(
+        `Grupo: ${project.namespace.full_path} | ${project.namespace.name}`,
+      )
+    // cli.log(`Grupo: ${project.gr}`)
+    console.log(project)
 
     const environments: Environment[] = project
       ? await this.gitlab?.Environments.all(project.id).then(envs =>
@@ -371,13 +377,11 @@ export default class Proyecto extends Command {
     }
 
     if (id) {
-      this.gitlab.Groups.show(id)
+      await this.gitlab.Groups.show(id)
         .then((group: Group) => this.logGroup(group))
-        .catch(() => {
+        .catch(() =>
           this.gitlab?.Projects.show(id)
-            .then((project: Project) => {
-              this.logProject(project)
-            })
+            .then((project: Project) => this.logProject(project))
             .catch(error => {
               if (error.response.status === 404) {
                 this.warn(`El grupo o proyecto no existe: ${id}`)
@@ -386,12 +390,12 @@ export default class Proyecto extends Command {
                   `Error al obtener grupo o proyecto (${id}): ${error.description}`,
                 )
               }
-            })
-        })
+            }),
+        )
     } else {
-      this.gitlab.Groups.all().then(groups => {
-        this.logGroups(groups.filter(group => !group.parent_id))
-      })
+      await this.gitlab.Groups.all().then(groups =>
+        this.logGroups(groups.filter(group => !group.parent_id)),
+      )
     }
   }
 }

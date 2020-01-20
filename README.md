@@ -30,8 +30,8 @@ USAGE
 # Commands
 <!-- commands -->
 * [`devops config [ACCIÓN]`](#devops-config-acción)
+* [`devops gitlab [ACCIÓN] [AMBIENTE]`](#devops-gitlab-acción-ambiente)
 * [`devops help [COMMAND]`](#devops-help-command)
-* [`devops proyecto [ACCIÓN] [AMBIENTE]`](#devops-proyecto-acción-ambiente)
 
 ## `devops config [ACCIÓN]`
 
@@ -49,30 +49,13 @@ OPTIONS
   --token=token  Token de acceso de GitLab (https://docs.gitlab.com/12.6/ee/user/profile/personal_access_tokens.html)
 ```
 
-## `devops help [COMMAND]`
-
-display help for devops
-
-```
-USAGE
-  $ devops help [COMMAND]
-
-ARGUMENTS
-  COMMAND  command to show help for
-
-OPTIONS
-  --all  see all commands in CLI
-```
-
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.2.3/src/commands/help.ts)_
-
-## `devops proyecto [ACCIÓN] [AMBIENTE]`
+## `devops gitlab [ACCIÓN] [AMBIENTE]`
 
 Información sobre proyectos individuales
 
 ```
 USAGE
-  $ devops proyecto [ACCIÓN] [AMBIENTE]
+  $ devops gitlab [ACCIÓN] [AMBIENTE]
 
 ARGUMENTS
   ACCIÓN    (abrir|open|redeploy|pipelines|variables|variable|info) [default: info] Acción a realizar sobre el grupo o
@@ -97,8 +80,23 @@ OPTIONS
                           (https://docs.gitlab.com/12.6/ee/user/profile/personal_access_tokens.html)
 
 ALIASES
-  $ devops project
-  $ devops projects
-  $ devops proyectos
+  $ devops gl
 ```
+
+## `devops help [COMMAND]`
+
+display help for devops
+
+```
+USAGE
+  $ devops help [COMMAND]
+
+ARGUMENTS
+  COMMAND  command to show help for
+
+OPTIONS
+  --all  see all commands in CLI
+```
+
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.2.3/src/commands/help.ts)_
 <!-- commandsstop -->

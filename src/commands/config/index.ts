@@ -1,6 +1,6 @@
 import {flags} from '@oclif/command'
 import * as inquirer from 'inquirer'
-import Command, {writeGitlabConfig} from '../../gitlab-command'
+import Command, {writeGitlabConfig} from '../../command'
 import hostOptions from './hostOptions.json'
 
 export class Config extends Command {
