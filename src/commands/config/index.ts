@@ -4,16 +4,14 @@ import Command, {writeGitlabConfig} from '../../gitlab-command'
 import hostOptions from './hostOptions.json'
 
 export class Config extends Command {
-  // static flags = {
-  //   ...Command.flags,
-  //   host: flags.string({options: Object.keys(hostOptions), description: 'Host de GitLab', env: 'GITLAB_HOST'}),
-  //   token: flags.string({options: Object.keys(hostOptions), description: 'Token de acceso de GitLab', env: 'GITLAB_TOKEN'}),
-  // };
-
   static description = 'Establece o cambia la configuración necesaria'
 
   static args = [
-    {name: 'action', options: ['reset'], description: 'Operación a realizar en la configuración'},
+    {
+      name: 'acción',
+      options: ['reset'],
+      description: 'Operación a realizar en la configuración',
+    },
   ]
 
   async run() {
@@ -24,8 +22,8 @@ export class Config extends Command {
       writeGitlabConfig(this, {})
     }
 
-    inquirer.prompt(
-      [
+    inquirer
+      .prompt([
         {
           name: 'host',
           message: 'Elige un servidor GitLab',
@@ -37,15 +35,19 @@ export class Config extends Command {
           message: 'Introduce un Personal Access Token vigente',
           type: 'password',
         },
-      ]
-    ).then(({host, token}) => {
-      writeGitlabConfig(this, {
-        host,
-        token,
+      ])
+      .then(({host, token}) => {
+        writeGitlabConfig(this, {
+          host,
+          token,
+        })
+          .then(() => {
+            console.log('Se guardó la configuración')
+          })
+          .catch(error => {
+            console.log(error)
+            this.error('Error al guardar la configuración')
+          })
       })
-    })
-
-    // const token =
-    this.log('Configuración establecida')
   }
 }

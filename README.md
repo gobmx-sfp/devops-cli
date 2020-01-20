@@ -29,21 +29,20 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
-* [`devops config [ACTION]`](#devops-config-action)
+* [`devops config [ACCIÓN]`](#devops-config-acción)
 * [`devops help [COMMAND]`](#devops-help-command)
 * [`devops proyecto [ACCIÓN] [AMBIENTE]`](#devops-proyecto-acción-ambiente)
-* [`devops variables [FILE]`](#devops-variables-file)
 
-## `devops config [ACTION]`
+## `devops config [ACCIÓN]`
 
 Establece o cambia la configuración necesaria
 
 ```
 USAGE
-  $ devops config [ACTION]
+  $ devops config [ACCIÓN]
 
 ARGUMENTS
-  ACTION  (reset) Operación a realizar en la configuración
+  ACCIÓN  (reset) Operación a realizar en la configuración
 
 OPTIONS
   --host=host    Nombre del host de GitLab
@@ -101,19 +100,5 @@ ALIASES
   $ devops project
   $ devops projects
   $ devops proyectos
-```
-
-## `devops variables [FILE]`
-
-describe the command here
-
-```
-USAGE
-  $ devops variables [FILE]
-
-OPTIONS
-  -f, --force
-  -h, --help       show CLI help
-  -n, --name=name  name to print
 ```
 <!-- commandsstop -->
