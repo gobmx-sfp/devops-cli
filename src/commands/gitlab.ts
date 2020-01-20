@@ -1,20 +1,20 @@
 import {filter, find, get, pick} from 'lodash'
-import {Options} from '@oclif/config/lib/plugin'
-import {flags} from '@oclif/command'
-import {cli} from 'cli-ux'
-import chalk from 'chalk'
-import * as inquirer from 'inquirer'
 import {
   ProjectSchema as Project,
   EnvironmentSchema as Environment,
   GroupSchema as Group,
   ResourceVariableSchema as Variable,
 } from 'gitlab'
+import {Options} from '@oclif/config/lib/plugin'
+import {flags} from '@oclif/command'
+import {cli} from 'cli-ux'
+import chalk from 'chalk'
+import * as inquirer from 'inquirer'
 import Command from '../command'
 import {baseGitlabColumns} from '../constants'
 
 export default class GitLab extends Command {
-  static description = 'Información sobre proyectos individuales'
+  static description = 'Interactuar con proyecto o grupo de GitLab'
 
   static args = [
     {
@@ -33,7 +33,7 @@ export default class GitLab extends Command {
     },
     {
       name: 'ambiente',
-      description: 'Seleccionar un ambiente por nombre o ID',
+      description: 'Seleccionar un ambiente específico por nombre o ID',
     },
   ]
 
@@ -78,7 +78,7 @@ export default class GitLab extends Command {
           minWidth: 7,
         },
         web_url: {
-          // extended: true,
+          header: 'URL',
         },
       },
       tableOptions as Options,
