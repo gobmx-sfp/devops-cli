@@ -5,7 +5,6 @@ import chalk from 'chalk'
 import * as fs from 'fs-extra'
 import * as path from 'path'
 import {configFile} from './constants'
-import {rejects} from 'assert'
 
 const git = require('simple-git')(process.cwd())
 

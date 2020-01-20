@@ -186,7 +186,7 @@ export default class GitLab extends Command {
     if (flags.debug) console.debug('Grupo', group)
 
     this.heading(`${group.name}`)
-    cli.log(`ID: ${group.id}`)
+    cli.log(`Grupo ID: ${group.id}`)
     cli.log(`Path: ${group.full_path}`)
     cli.log(`GitLab: ${group.web_url}`)
 
@@ -225,7 +225,7 @@ export default class GitLab extends Command {
     if (flags.debug) console.debug('Proyecto', project)
 
     this.heading(`${project.name}`)
-    cli.log(`ID: ${project.id}`)
+    cli.log(`Proyecto ID: ${project.id}`)
     cli.log(`Path: ${project.path_with_namespace}`)
     cli.log(`GitLab: ${project.web_url}`)
     project.namespace &&

@@ -18,6 +18,12 @@ export class Login extends Command {
         choices: hostOptions,
       },
       {
+        name: 'host',
+        message: 'Servidor GitLab',
+        type: 'input',
+        when: obj => obj.host === null,
+      },
+      {
         name: 'token',
         message: 'Introduce un Personal Access Token vigente',
         type: 'password',
@@ -38,7 +44,7 @@ export class Login extends Command {
         })
       })
       .catch(error => {
-        if (error.response.status === 401) {
+        if (error.response?.status === 401) {
           this.warn('Token inválido')
         } else {
           console.log(error)

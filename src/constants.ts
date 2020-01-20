@@ -24,6 +24,10 @@ export const hostOptions = [
     value: 'https://gitlab.com',
     name: 'GitLab.com',
   },
+  {
+    value: null,
+    name: 'Otro...',
+  },
 ]
 
 export const configFile = 'gitlab.config.json'
