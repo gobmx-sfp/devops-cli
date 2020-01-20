@@ -16,11 +16,11 @@ Declaranet CLI
 # Usage
 <!-- usage -->
 ```sh-session
-$ npm install -g @gobmx-sfp/devops-cli
+$ npm install -g @gobmx-sfp/devops
 $ devops COMMAND
 running command...
 $ devops (-v|--version|version)
-@gobmx-sfp/devops-cli/0.1.0 darwin-x64 node-v13.6.0
+@gobmx-sfp/devops/0.1.0 darwin-x64 node-v13.6.0
 $ devops --help [COMMAND]
 USAGE
   $ devops COMMAND
@@ -36,7 +36,7 @@ USAGE
 
 ## `devops gitlab [ACCIÓN] [AMBIENTE]`
 
-Información sobre proyectos individuales
+Interactuar con proyecto o grupo de GitLab
 
 ```
 USAGE
@@ -46,7 +46,7 @@ ARGUMENTS
   ACCIÓN    (abrir|open|redeploy|pipelines|variables|variable|info) [default: info] Acción a realizar sobre el grupo o
             proyecto
 
-  AMBIENTE  Seleccionar un ambiente por nombre o ID
+  AMBIENTE  Seleccionar un ambiente específico por nombre o ID
 
 OPTIONS
   -a, --all               Incluir todos los ambientes en vez de solo los ambientes activos

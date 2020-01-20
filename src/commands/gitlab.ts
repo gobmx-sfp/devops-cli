@@ -142,6 +142,7 @@ export default class GitLab extends Command {
       {
         environment_scope: {
           header: 'Ambienbte(s)',
+          get: (obj: any) => obj.environment_scope === '*' ? '* (Todos)' : obj.environment_scope,
         },
       } :
       {}
@@ -149,6 +150,7 @@ export default class GitLab extends Command {
     cli.table(
       variables,
       {
+        ...envScopeColumn,
         key: {
           header: 'Nombre',
           minWidth: 7,
@@ -157,14 +159,15 @@ export default class GitLab extends Command {
           header: 'Valor',
         },
         protected: {
-          header: 'Protegida',
+          header: 'Prot.',
           get: variable => (get(variable, 'protected', false) ? 'Sí' : 'No'),
         },
         masked: {
-          header: 'Enmascarada',
+          header: 'Masked',
           get: variable => (get(variable, 'masked', false) ? 'Sí' : 'No'),
         },
         variable_type: {
+          extended: true,
           header: 'Tipo',
           get: ({variable_type}: Variable) => {
             const variableTypes = {
@@ -174,7 +177,6 @@ export default class GitLab extends Command {
             return get(variableTypes, variable_type, variable_type)
           },
         },
-        ...envScopeColumn,
       },
       tableOptions as Options,
     )
@@ -291,7 +293,8 @@ export default class GitLab extends Command {
 
   async inquireProjectVariable(project: Project) {
     // prettier-ignore
-    inquirer.prompt([
+    inquirer
+    .prompt([
       {
         name: 'environment_scope',
         message: 'Ambiente(s)',
@@ -309,7 +312,7 @@ export default class GitLab extends Command {
         name: 'key',
         message: 'Nombre de la variable',
         type: 'string',
-        validate: value => !value.trim(),
+        validate: value => Boolean(value.trim()),
       },
       {
         name: 'value',
@@ -323,32 +326,47 @@ export default class GitLab extends Command {
         type: 'checkbox',
         choices: ['protected', 'masked'],
       },
-      {
-        name: 'confirm',
-        message: 'Se agregará una variable ¿Estás seguro?',
-        type: 'confirm',
-        default: false,
-      },
     ])
-    .then(({key, value, options, environment_scope, confirm}) => {
-      if (!confirm) return
-
-      this.log('Creando variable...')
-        this.gitlab?.ProjectVariables.create(project.id, {
-          key,
-          value,
-          environment_scope,
-          ...options.reduce(
-            (opts: string[], opt: string) => ({
-              ...opts,
-              [opt]: true,
-            }),
-            {},
-          ),
-        }).catch(error => {
-          console.error(error)
-          this.warn('Error al crear variable')
-        })
+    .then(({key, value, environment_scope, options}) => {
+      const params = {
+        key,
+        value,
+        environment_scope,
+        ...options.reduce(
+          (opts: string[], opt: string) => ({
+            ...opts,
+            [opt]: true,
+          }),
+          {},
+        ),
+      }
+      return this.gitlab?.ProjectVariables.create(project.id, params)
+      .then(() => {
+        this.log('Creado')
+      })
+      .catch(
+          error => {
+            const [errorKey] = error.description?.key || []
+            if (errorKey?.match(/already been taken/)) {
+              cli.confirm('Ya existe variable con el mismo nombre ¿Reescribir? (y/n)')
+              .then(confirmed => {
+                if (confirmed) {
+                  this.gitlab?.ProjectVariables.edit(project.id, key, params)
+                  .then(() => {
+                    this.log('Actualizado')
+                  })
+                  .catch(error => {
+                    console.error(error)
+                    this.warn('Error al actualizar variable')
+                  })
+                }
+              })
+            } else {
+              this.warn('Error al crear variable')
+              console.error(error)
+            }
+          },
+        )
     })
   }
 
