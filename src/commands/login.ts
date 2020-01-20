@@ -7,7 +7,13 @@ import {hostOptions} from '../constants'
 export class Login extends Command {
   static description = 'Configurar servidor y token de acceso'
 
+  static flags = {
+    ...Command.flags,
+  }
+
   async run() {
+    const {flags} = this.parse(Login)
+
     // prettier-ignore
     inquirer
     .prompt([
@@ -16,20 +22,23 @@ export class Login extends Command {
         message: 'Elige un servidor GitLab',
         type: 'list',
         choices: hostOptions,
+        when: !flags.host,
       },
       {
         name: 'host',
         message: 'Servidor GitLab',
         type: 'input',
-        when: obj => obj.host === null,
+        when: obj => !flags.host && obj.host === null,
       },
       {
         name: 'token',
         message: 'Introduce un Personal Access Token vigente',
         type: 'password',
+        default: flags.token,
+        when: !flags.token,
       },
     ])
-    .then(({host, token}) => {
+    .then(({host = flags.host, token = flags.token}) => {
       const gitlab = new Gitlab({host, token})
       return gitlab.Users.current()
       .then((user: any) => {
