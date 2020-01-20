@@ -4,19 +4,21 @@ import {find} from 'lodash'
 import chalk from 'chalk'
 import * as fs from 'fs-extra'
 import * as path from 'path'
+import {configFile} from './constants'
+import {rejects} from 'assert'
 
 const git = require('simple-git')(process.cwd())
 
-const CONFIG_FILE = 'gitlab.config.json'
-
 const getGitProjectId = async () => {
-  return new Promise<string>(resolve => {
+  return new Promise<string>((resolve, reject) => {
     return git.silent(true).getRemotes(true, (_: any, remotes: any) => {
       if (remotes?.length) {
         const origin = find(remotes, {name: 'origin'})
         if (origin) {
-          const [, namespace] = origin.refs.push.match(/.+:(.+).git/)
+          const [, namespace] = origin.refs.fetch.match(/.+:(.+).git/)
           resolve(namespace)
+        } else {
+          reject(new Error('No git repository'))
         }
       }
     })
@@ -24,15 +26,15 @@ const getGitProjectId = async () => {
 }
 
 const readGitlabConfig = (command: Command) =>
-  fs.readJSON(path.join(command.config.configDir, CONFIG_FILE)).catch(error => {
+  fs.readJSON(path.join(command.config.configDir, configFile)).catch(error => {
     if (error.code === 'ENOINT') {
-      command.log('Necesario')
+      command.log('Directorio no existe')
     }
   })
 
 export const writeGitlabConfig = async (command: Command, config: object) => {
   await fs.ensureDir(command.config.configDir)
-  return fs.writeJSON(path.join(command.config.configDir, CONFIG_FILE), config)
+  return fs.writeJSON(path.join(command.config.configDir, configFile), config)
 }
 
 export default abstract class extends Command {
@@ -45,6 +47,10 @@ export default abstract class extends Command {
       description:
         'Token de acceso de GitLab (https://docs.gitlab.com/12.6/ee/user/profile/personal_access_tokens.html)',
       env: 'GITLAB_TOKEN',
+    }),
+    debug: flags.boolean({
+      default: false,
+      description: 'Incluir información de debug',
     }),
   }
 
@@ -63,16 +69,11 @@ export default abstract class extends Command {
     const host = flags.host || (await readGitlabConfig(this))?.host
     const token = flags.token || (await readGitlabConfig(this))?.token
 
-    if (this.id !== 'config' && (!host || !token)) {
-      this.error(
-        `Necesario cofifgurar credenciales de acceso: ${chalk.bold(
-          '$ devops config',
-        )}`,
-      )
+    if (!['login', 'logout'].includes(`${this.id}`) && (!host || !token)) {
+      this.error(`Sin configuracióbn. Ejecuta ${chalk.bold('$ devops login')}`)
     }
 
     this.gitlab = new Gitlab({host, token})
-
     this.gitProjectId = await getGitProjectId()
   }
 
@@ -88,8 +89,4 @@ export default abstract class extends Command {
   heading(text: string) {
     return this.log(chalk.underline.bold(`\n${text}\n`))
   }
-
-  // async finally(err) {
-  //   // called after run and catch regardless of whether or not the command errored
-  // }
 }

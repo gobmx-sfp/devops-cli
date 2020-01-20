@@ -29,25 +29,10 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
-* [`devops config [ACCIÓN]`](#devops-config-acción)
 * [`devops gitlab [ACCIÓN] [AMBIENTE]`](#devops-gitlab-acción-ambiente)
 * [`devops help [COMMAND]`](#devops-help-command)
-
-## `devops config [ACCIÓN]`
-
-Establece o cambia la configuración necesaria
-
-```
-USAGE
-  $ devops config [ACCIÓN]
-
-ARGUMENTS
-  ACCIÓN  (reset) Operación a realizar en la configuración
-
-OPTIONS
-  --host=host    Nombre del host de GitLab
-  --token=token  Token de acceso de GitLab (https://docs.gitlab.com/12.6/ee/user/profile/personal_access_tokens.html)
-```
+* [`devops login`](#devops-login)
+* [`devops logout`](#devops-logout)
 
 ## `devops gitlab [ACCIÓN] [AMBIENTE]`
 
@@ -68,6 +53,7 @@ OPTIONS
   -x, --extended          show extra columns
   --columns=columns       only show provided columns (comma-separated)
   --csv                   output is csv format [alias: --output=csv]
+  --debug                 Incluir información de debug
   --filter=filter         filter property by partial string matching, ex: name=foo
   --host=host             Nombre del host de GitLab
   --id=id                 ID o ruta de grupo o proyecto en GitLab. Ej: dgti, dnet/catalogos, 72
@@ -99,4 +85,32 @@ OPTIONS
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.2.3/src/commands/help.ts)_
+
+## `devops login`
+
+Configurar servidor y token de acceso
+
+```
+USAGE
+  $ devops login
+
+OPTIONS
+  --debug        Incluir información de debug
+  --host=host    Nombre del host de GitLab
+  --token=token  Token de acceso de GitLab (https://docs.gitlab.com/12.6/ee/user/profile/personal_access_tokens.html)
+```
+
+## `devops logout`
+
+Olvidar token de acceso
+
+```
+USAGE
+  $ devops logout
+
+OPTIONS
+  --debug        Incluir información de debug
+  --host=host    Nombre del host de GitLab
+  --token=token  Token de acceso de GitLab (https://docs.gitlab.com/12.6/ee/user/profile/personal_access_tokens.html)
+```
 <!-- commandsstop -->

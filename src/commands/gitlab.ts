@@ -1,16 +1,17 @@
-import {flags} from '@oclif/command'
 import {filter, find, get, pick} from 'lodash'
+import {Options} from '@oclif/config/lib/plugin'
+import {flags} from '@oclif/command'
 import {cli} from 'cli-ux'
-import * as inquirer from 'inquirer'
-import Command from '../command'
 import chalk from 'chalk'
+import * as inquirer from 'inquirer'
 import {
   ProjectSchema as Project,
   EnvironmentSchema as Environment,
   GroupSchema as Group,
   ResourceVariableSchema as Variable,
 } from 'gitlab'
-import {Options} from '@oclif/config/lib/plugin'
+import Command from '../command'
+import {baseGitlabColumns} from '../constants'
 
 export default class GitLab extends Command {
   static description = 'Información sobre proyectos individuales'
@@ -60,7 +61,6 @@ export default class GitLab extends Command {
   async logGroups(groups: Group[], total = false) {
     const {flags} = this.parse(GitLab)
     const tableOptions = pick(flags, Object.keys(cli.table.flags()))
-
     this.heading('Grupos')
     cli.table(
       groups,
@@ -81,10 +81,7 @@ export default class GitLab extends Command {
           // extended: true,
         },
       },
-      {
-        printLine: this.log,
-        ...(tableOptions as Options),
-      },
+      tableOptions as Options,
     )
     total && cli.log(chalk.bold('Total:\t'), groups.length.toString())
   }
@@ -97,22 +94,9 @@ export default class GitLab extends Command {
     cli.table(
       projects,
       {
-        id: {
-          header: 'ID',
-          minWidth: 7,
-        },
-        path: {
-          header: 'Ruta',
-          minWidth: 10,
-        },
-        web_url: {
-          // extended: true,
-        },
+        ...baseGitlabColumns,
       },
-      {
-        printLine: this.log,
-        ...(tableOptions as Options),
-      },
+      tableOptions as Options,
     )
     total && cli.log(chalk.bold('Total:\t'), projects.length.toString())
   }
@@ -140,10 +124,7 @@ export default class GitLab extends Command {
           get: env => env.external_url || '',
         },
       },
-      {
-        printLine: this.log,
-        ...(tableOptions as Options),
-      },
+      tableOptions as Options,
     )
     total && cli.log(chalk.bold('Total:\t'), environments.length.toString())
   }
@@ -195,15 +176,15 @@ export default class GitLab extends Command {
         },
         ...envScopeColumn,
       },
-      {
-        printLine: this.log,
-        ...(tableOptions as Options),
-      },
+      tableOptions as Options,
     )
     total && cli.log(chalk.bold('Total\t'), variables.length.toString())
   }
 
   async logGroup(group: Group) {
+    const {flags} = this.parse(GitLab)
+    if (flags.debug) console.debug('Grupo', group)
+
     this.heading(`${group.name}`)
     cli.log(`ID: ${group.id}`)
     cli.log(`Path: ${group.full_path}`)
@@ -219,7 +200,7 @@ export default class GitLab extends Command {
     }
 
     if (!this.gitlab) {
-      this.error('GitLab no configurado. Ejecuta: "devops config"')
+      this.error('GitLab no configurado. Ejecuta: "devops login"')
     }
 
     await this.gitlab.GroupVariables.all(group.id).then(variables =>
@@ -237,10 +218,12 @@ export default class GitLab extends Command {
 
   async logProject(project: Project) {
     if (!this.gitlab) {
-      this.error('GitLab no configurado. Ejecuta: "devops config"')
+      this.error('GitLab no configurado. Ejecuta: "devops login"')
     }
 
     const {args, flags} = this.parse(GitLab)
+    if (flags.debug) console.debug('Proyecto', project)
+
     this.heading(`${project.name}`)
     cli.log(`ID: ${project.id}`)
     cli.log(`Path: ${project.path_with_namespace}`)
@@ -249,8 +232,6 @@ export default class GitLab extends Command {
       cli.log(
         `Grupo: ${project.namespace.full_path} | ${project.namespace.name}`,
       )
-    // cli.log(`Grupo: ${project.gr}`)
-    console.log(project)
 
     // prettier-ignore
     const environments: Environment[] = project ?
@@ -376,7 +357,7 @@ export default class GitLab extends Command {
     const id = flags.id || this.gitProjectId
 
     if (!this.gitlab) {
-      this.error('GitLab no configurado. Ejecuta: "devops config"')
+      this.error('GitLab no configurado. Ejecuta: "devops login"')
     }
 
     if (id) {
