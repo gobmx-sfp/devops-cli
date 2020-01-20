@@ -20,7 +20,7 @@ $ npm install -g @gobmx-sfp/devops-cli
 $ devops COMMAND
 running command...
 $ devops (-v|--version|version)
-@gobmx-sfp/devops-cli/0.0.5 darwin-x64 node-v13.6.0
+@gobmx-sfp/devops-cli/0.1.0 darwin-x64 node-v13.6.0
 $ devops --help [COMMAND]
 USAGE
   $ devops COMMAND
