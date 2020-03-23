@@ -1,0 +1,3 @@
+include:
+  - project: desarrollo/ci-cd
+    file: /templates/sonarqube.yml
