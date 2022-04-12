@@ -20,7 +20,7 @@
     "gitlab": "^14.1.1",
     "inquirer": "^7.0.1",
     "lodash": "^4.17.15",
-    "simple-git": "^1.130.0",
+    "simple-git": "^3.5.0",
     "tslib": "^1"
   },
   "devDependencies": {
